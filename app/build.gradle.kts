@@ -168,6 +168,13 @@ android {
             enableV4Signing = true
         }
         create("withoutProperties") {
+            // 补上 storeFile，使用 Android SDK 自带的 debug.keystore
+        // 这样 CI 环境也能正常签名，不会报 "missing required property 'storeFile'"
+        storeFile = file("${System.getProperty("android.sdk.path")}/.android/debug.keystore")
+        storePassword = "android"
+        keyAlias = "androiddebugkey"
+        keyPassword = "android"
+
             enableV1Signing = true
             enableV2Signing = true
             enableV3Signing = true
