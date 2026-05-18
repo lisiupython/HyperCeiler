@@ -2,28 +2,29 @@
 
 pluginManagement {
     repositories {
-        maven("https://jitpack.io")
-        maven("https://api.xposed.info")
-        maven("https://mirrors.tuna.tsinghua.edu.cn/maven/")
-        maven("https://maven.aliyun.com/repository/google")
-        // maven("https://maven.aliyun.com/repository/gradle-plugin")
-        maven("https://maven.aliyun.com/repository/public")
         gradlePluginPortal()
         google()
         mavenCentral()
+        maven("https://jitpack.io")
+        maven("https://api.xposed.info")
+        maven("https://mirrors.tuna.tsinghua.edu.cn/maven/")
+        // 如果仍想保留阿里云镜像，务必放最后
+        maven("https://maven.aliyun.com/repository/google")
+        maven("https://maven.aliyun.com/repository/public")
     }
 }
 
 dependencyResolutionManagement {
-    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        google()
+        mavenCentral()
         maven("https://jitpack.io")
         maven("https://api.xposed.info")
         maven("https://mirrors.tuna.tsinghua.edu.cn/maven/")
+        // 同样，阿里云镜像放最后
         maven("https://maven.aliyun.com/repository/google")
         maven("https://maven.aliyun.com/repository/public")
-        google()
-        mavenCentral()
     }
 }
 
