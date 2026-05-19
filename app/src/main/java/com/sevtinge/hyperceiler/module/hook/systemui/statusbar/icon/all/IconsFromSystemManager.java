@@ -26,7 +26,13 @@ public class IconsFromSystemManager extends BaseHook {
 
     @Override
     public void init() {
-        Class<?> statusBarIconControllerImpl = findClass("com.android.systemui.statusbar.phone.ui.StatusBarIconControllerImpl");
+        // Class<?> statusBarIconControllerImpl = findClass("com.android.systemui.statusbar.phone.ui.StatusBarIconControllerImpl");
+        // 修复: 改为 findClassIfExists() 并增加空判断，类不存在时安全跳过
+        Class<?> statusBarIconControllerImpl = findClassIfExists("com.android.systemui.statusbar.phone.ui.StatusBarIconControllerImpl");
+        if (statusBarIconControllerImpl == null) {
+            logW(TAG, "StatusBarIconControllerImpl not found, skipping hook.");
+            return;
+        }
 
         boolean successHooked = findAndHookMethodSilently(statusBarIconControllerImpl,
             "setIcon",
