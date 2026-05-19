@@ -286,9 +286,11 @@ public class DisplayHardwareDetail extends BaseHook {
                                     if (tii.iconType == ti.iconType) {
                                         XposedHelpers.callMethod(tv, "setBlocked", !tii.iconShow);
                                         if (tii.iconShow) {
-                                            if (isNewNetworkStyle()) {
+                                            try {
+                                                // 优先尝试双参数版本（新布局及兼容模式）
                                                 XposedHelpers.callMethod(tv, "setNetworkSpeed", tii.iconText, "");
-                                            } else {
+                                            } catch (NoSuchMethodError e) {
+                                                // 回退到单参数版本（旧布局）
                                                 XposedHelpers.callMethod(tv, "setNetworkSpeed", tii.iconText);
                                             }
                                         }
