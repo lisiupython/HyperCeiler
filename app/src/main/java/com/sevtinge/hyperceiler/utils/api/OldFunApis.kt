@@ -228,24 +228,33 @@ fun isDeviceEncrypted(context: Context): Boolean {
 //     }
 // }
 
-// ✅ 修复：结果只计算一次，缓存起来，不在运行时重复查找
-private var _isNewNetworkStyleCache: Boolean? = null
-
+// ✅ 修复：LSPosed 2.0+ 改变了 ClassLoader 行为，导致 EzXHelper.classLoader 无法正确解析 NetworkSpeedView 类，使得 isNewNetworkStyle() 错误返回 false，进而走入了不存在的单参数 setNetworkSpeed(String) 代码路径，触发 NoSuchMethodError 导致 SystemUI 崩溃。
 fun isNewNetworkStyle(): Boolean {
-    _isNewNetworkStyleCache?.let { return it }  // 有缓存直接返回
-    
-    // 首次调用时计算（此时 classLoader 还是有效的）
-    val loader = EzXHelper.classLoader ?: return false
-    val networkSpeedViewCls = XposedHelpers.findClassIfExists(
-        "com.android.systemui.statusbar.views.NetworkSpeedView", loader
+    // 优先通过 EzXHelper.classLoader 查找类
+    var networkSpeedViewCls = XposedHelpers.findClassIfExists(
+        "com.android.systemui.statusbar.views.NetworkSpeedView", EzXHelper.classLoader
     )
-    val result = if (networkSpeedViewCls != null) {
+    // 兜底：如果 EzXHelper.classLoader 在 LSPosed 2.0+ 下无法找到类，尝试使用当前线程上下文 ClassLoader
+    if (networkSpeedViewCls == null) {
+        networkSpeedViewCls = XposedHelpers.findClassIfExists(
+            "com.android.systemui.statusbar.views.NetworkSpeedView",
+            Thread.currentThread().contextClassLoader
+        )
+    }
+    return if (networkSpeedViewCls != null) {
         LinearLayout::class.java.isAssignableFrom(networkSpeedViewCls)
     } else {
-        false
+        // 最终兜底：通过方法签名判断（新版本使用双参数 setNetworkSpeed(String, String)）
+        try {
+            val cls = XposedHelpers.findClass(
+                "com.android.systemui.statusbar.views.NetworkSpeedView", EzXHelper.classLoader
+            )
+            cls.getDeclaredMethod("setNetworkSpeed", String::class.java, String::class.java)
+            true
+        } catch (_: Throwable) {
+            false
+        }
     }
-    _isNewNetworkStyleCache = result  // 缓存结果
-    return result
 }
 
 val Int.dp: Int get() = (this.toFloat().dp).toInt()
