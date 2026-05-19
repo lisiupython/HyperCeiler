@@ -417,10 +417,11 @@ public class HomePageFragment extends DashboardFragment
 
 
     public void isSignPass() {
-        if (mWarnTipVisible) return;
-        mHeadtipWarn.setTitle(R.string.headtip_warn_sign_verification_failed);
-        mHeadtipWarn.setVisible(!SignUtils.isSignCheckPass(requireContext()));
-        mWarnTipVisible = true;
+        //禁用首页官方签名检查提示。
+        //if (mWarnTipVisible) return;
+        //mHeadtipWarn.setTitle(R.string.headtip_warn_sign_verification_failed);
+        //mHeadtipWarn.setVisible(!SignUtils.isSignCheckPass(requireContext()));
+        //mWarnTipVisible = true;
     }
 
     public void isSupportAutoSafeMode() {
