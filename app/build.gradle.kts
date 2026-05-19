@@ -169,11 +169,12 @@ android {
         }
         create("withoutProperties") {
             // 补上 storeFile，使用 Android SDK 自带的 debug.keystore
-        // 这样 CI 环境也能正常签名，不会报 "missing required property 'storeFile'"
-        storeFile = file("${System.getProperty("android.sdk.path")}/.android/debug.keystore")
-        storePassword = "android"
-        keyAlias = "androiddebugkey"
-        keyPassword = "android"
+            // 这样 CI 环境也能正常签名，不会报 "missing required property 'storeFile'"
+            val home = System.getenv("HOME") ?: System.getProperty("user.home") ?: "/root"
+            storeFile = file("$home/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
 
             enableV1Signing = true
             enableV2Signing = true
