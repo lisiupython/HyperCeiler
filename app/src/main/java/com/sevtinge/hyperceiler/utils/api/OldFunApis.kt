@@ -215,15 +215,37 @@ fun isDeviceEncrypted(context: Context): Boolean {
  * @return 返回一个 Boolean 值，true 为新布局，false 为旧布局
  */
 
+// OldFunApis.kt
+// ❌ 原来：依赖 EzXHelper.classLoader，运行时可能为 null
+// fun isNewNetworkStyle(): Boolean {
+//     val networkSpeedViewCls = XposedHelpers.findClassIfExists(
+//         "com.android.systemui.statusbar.views.NetworkSpeedView", EzXHelper.classLoader
+//     )
+//     return if (networkSpeedViewCls != null) {
+//         LinearLayout::class.java.isAssignableFrom(networkSpeedViewCls)
+//     } else {
+//         false
+//     }
+// }
+
+// ✅ 修复：结果只计算一次，缓存起来，不在运行时重复查找
+private var _isNewNetworkStyleCache: Boolean? = null
+
 fun isNewNetworkStyle(): Boolean {
+    _isNewNetworkStyleCache?.let { return it }  // 有缓存直接返回
+    
+    // 首次调用时计算（此时 classLoader 还是有效的）
+    val loader = EzXHelper.classLoader ?: return false
     val networkSpeedViewCls = XposedHelpers.findClassIfExists(
-        "com.android.systemui.statusbar.views.NetworkSpeedView", EzXHelper.classLoader
+        "com.android.systemui.statusbar.views.NetworkSpeedView", loader
     )
-    return if (networkSpeedViewCls != null) {
+    val result = if (networkSpeedViewCls != null) {
         LinearLayout::class.java.isAssignableFrom(networkSpeedViewCls)
     } else {
         false
     }
+    _isNewNetworkStyleCache = result  // 缓存结果
+    return result
 }
 
 val Int.dp: Int get() = (this.toFloat().dp).toInt()
