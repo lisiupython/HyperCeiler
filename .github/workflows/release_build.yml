@@ -1,8 +1,8 @@
 name: Release Build
-# 待修改
+
 on:
   push:
-    branches: [ "main2" ]
+    branches: [ "main" ]          # 改回 main，与签名条件一致
     paths-ignore:
       - ".github/**"
       - "!.github/workflows/**"
@@ -34,15 +34,29 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # 有 secrets 时用真实签名，否则生成临时 debug keystore
       - name: Create Sign File
-        if: github.ref == 'refs/heads/main'
         run: |
-          touch signing.properties
-          echo storePassword=${{ secrets.KEY_STORE_PASSWORD }} >> signing.properties
-          echo keyAlias=${{ secrets.ALIAS }} >> signing.properties
-          echo keyPassword='${{ secrets.KEY_STORE_PASSWORD }}' >> signing.properties
-          echo storeFile=../key.jks >> signing.properties
-          echo ${{ secrets.SIGNING_KEY }} | base64 --decode > key.jks
+          if [ -n "${{ secrets.SIGNING_KEY }}" ]; then
+            echo ${{ secrets.SIGNING_KEY }} | base64 --decode > key.jks
+            touch signing.properties
+            echo storeFile=../key.jks           >> signing.properties
+            echo storePassword=${{ secrets.KEY_STORE_PASSWORD }} >> signing.properties
+            echo keyAlias=${{ secrets.ALIAS }}  >> signing.properties
+            echo keyPassword=${{ secrets.KEY_STORE_PASSWORD }} >> signing.properties
+          else
+            keytool -genkeypair -v \
+              -keystore $GITHUB_WORKSPACE/debug.keystore \
+              -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass android -keypass android \
+              -dname "CN=Android Debug,O=Android,C=US"
+            touch signing.properties
+            echo storeFile=$GITHUB_WORKSPACE/debug.keystore >> signing.properties
+            echo storePassword=android      >> signing.properties
+            echo keyAlias=androiddebugkey  >> signing.properties
+            echo keyPassword=android       >> signing.properties
+          fi
 
       - name: Build with Gradle
         shell: bash
